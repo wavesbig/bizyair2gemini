@@ -76,7 +76,7 @@ function getValueByPath(obj: any, path: string): any {
 
 export async function POST(
   request: NextRequest,
-  context: { params: Promise<{ model: string }> }
+  context: { params: Promise<{ [key: string]: string }> }
 ) {
   try {
     // 验证 API Key
