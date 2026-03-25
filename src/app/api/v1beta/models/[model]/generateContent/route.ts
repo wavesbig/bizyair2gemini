@@ -139,6 +139,10 @@ export async function POST(
     }
 
     // 发送请求到 BizyAir
+    console.log('=== BizyAir Request ===')
+    console.log('URL:', 'https://api.bizyair.cn/w/v1/webapp/task/openapi/create')
+    console.log('Body:', JSON.stringify(bizyairRequest, null, 2))
+
     const response = await fetch(
       'https://api.bizyair.cn/w/v1/webapp/task/openapi/create',
       {
@@ -152,9 +156,11 @@ export async function POST(
     )
 
     const result = await response.json()
+    console.log('=== BizyAir Response ===')
+    console.log(JSON.stringify(result, null, 2))
 
     // 返回 Gemini 格式响应
-    if (result.code === 0 || result.success) {
+    if (result.code === 0 || result.success || result.status === 'Success') {
       return NextResponse.json({
         candidates: [
           {
@@ -168,11 +174,16 @@ export async function POST(
         ]
       })
     } else {
+      console.log('=== BizyAir Error ===')
+      console.log('Message:', result.message)
+      console.log('Code:', result.code)
+      console.log('Full response:', result)
       return NextResponse.json(
         {
           error: {
             message: result.message || 'BizyAir API error',
             code: result.code,
+            fullResponse: result,
           },
         },
         { status: 400 }

@@ -74,6 +74,6 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Error creating app:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: 'Internal server error', details: String(error) }, { status: 500 })
   }
 }

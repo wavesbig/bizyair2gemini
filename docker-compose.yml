@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=file:/app/data/dev.db
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+      - PROXY_API_KEY=${PROXY_API_KEY}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-change-this-in-production}
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
