@@ -7,13 +7,14 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
-import { Key, Lock, Eye, EyeOff, RefreshCw } from 'lucide-react'
+import { Key, Lock, Eye, EyeOff, RefreshCw, Copy } from 'lucide-react'
 import { safeFetch } from '@/lib/safeFetch'
 
 export default function SettingsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [hasApiKey, setHasApiKey] = useState(false)
+  const [maskedApiKey, setMaskedApiKey] = useState('')
   const [showApiKey, setShowApiKey] = useState(false)
   const [apiKey, setApiKey] = useState('')
   const [passwords, setPasswords] = useState({
@@ -36,11 +37,21 @@ export default function SettingsPage() {
       }
 
       setHasApiKey(result.data.hasApiKey)
+      setMaskedApiKey(result.data.apiKey || '')
     } catch (error) {
       console.error('Failed to fetch settings:', error)
     } finally {
       setLoading(false)
     }
+  }
+
+  function copyApiKey() {
+    // 需要获取完整 key，但后端只返回掩码，这里复制掩码
+    navigator.clipboard.writeText(maskedApiKey).then(() => {
+      toast.success('API Key 已复制')
+    }).catch(() => {
+      toast.error('复制失败')
+    })
   }
 
   async function handleApiKeySave() {
@@ -60,6 +71,9 @@ export default function SettingsPage() {
       if (response.ok) {
         toast.success('API Key 已保存')
         setHasApiKey(true)
+        // 保存后更新显示的掩码
+        const masked = `${apiKey.slice(0, 8)}...${apiKey.slice(-4)}`
+        setMaskedApiKey(masked)
         setApiKey('')
       } else {
         toast.error('保存失败')
@@ -140,15 +154,29 @@ export default function SettingsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                {hasApiKey && maskedApiKey && (
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-white/5 border border-white/10">
+                    <Key className="w-4 h-4 text-indigo-400" />
+                    <code className="flex-1 text-sm text-gray-300 font-mono">{maskedApiKey}</code>
+                    <button
+                      type="button"
+                      onClick={copyApiKey}
+                      className="text-gray-400 hover:text-white p-1"
+                      title="复制 API Key"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
                 <div>
-                  <Label className="text-gray-300">API Key</Label>
+                  <Label className="text-gray-300">{hasApiKey ? '重新设置 API Key' : '设置 API Key'}</Label>
                   <div className="flex gap-2 mt-1">
                     <div className="relative flex-1">
                       <Input
                         type={showApiKey ? 'text' : 'password'}
                         value={apiKey}
                         onChange={(e) => setApiKey(e.target.value)}
-                        placeholder={hasApiKey ? '已设置，点击重新设置' : '输入 API Key'}
+                        placeholder={hasApiKey ? '输入新 Key 替换当前' : '输入 API Key'}
                         className="glass-input text-white pr-20"
                       />
                       <div className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1">
