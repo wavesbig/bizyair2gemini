@@ -19,7 +19,7 @@ export async function GET() {
 
     return NextResponse.json({
       hasApiKey: !!settings.apiKey,
-      apiKey: settings.apiKey ? `${settings.apiKey.slice(0, 8)}...${settings.apiKey.slice(-4)}` : null,
+      apiKey: settings.apiKey || null,
     })
   } catch (error) {
     console.error('Error fetching settings:', error)
