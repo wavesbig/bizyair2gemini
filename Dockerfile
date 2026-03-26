@@ -6,7 +6,6 @@ WORKDIR /app
 # 先复制 package.json 和 prisma schema
 COPY package*.json ./
 COPY prisma ./prisma/
-COPY prisma.config.ts ./
 
 # 安装依赖 (不运行 postinstall)
 RUN npm ci --ignore-scripts
@@ -34,7 +33,6 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
-COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./
 
 # 设置环境变量
 ENV NODE_ENV=production
