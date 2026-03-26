@@ -13,7 +13,6 @@ import { safeFetch } from '@/lib/safeFetch'
 export default function SettingsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [hasApiKey, setHasApiKey] = useState(false)
   const [maskedApiKey, setMaskedApiKey] = useState('')
   const [showApiKey, setShowApiKey] = useState(false)
   const [apiKey, setApiKey] = useState('')
@@ -36,7 +35,6 @@ export default function SettingsPage() {
         return
       }
 
-      setHasApiKey(result.data.hasApiKey)
       setMaskedApiKey(result.data.apiKey || '')
     } catch (error) {
       console.error('Failed to fetch settings:', error)
@@ -70,7 +68,6 @@ export default function SettingsPage() {
 
       if (response.ok) {
         toast.success('API Key 已保存')
-        setHasApiKey(true)
         setMaskedApiKey(key)
         setApiKey('')
       } else {
@@ -87,14 +84,6 @@ export default function SettingsPage() {
     if (apiKey.trim()) {
       saveApiKey(apiKey)
     }
-  }
-
-  async function handleApiKeySave() {
-    if (!apiKey.trim()) {
-      toast.error('请输入 API Key')
-      return
-    }
-    await saveApiKey(apiKey)
   }
 
   function generateApiKey() {
@@ -166,22 +155,8 @@ export default function SettingsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {hasApiKey && maskedApiKey && (
-                  <div className="flex items-center gap-2 p-3 rounded-lg bg-white/5 border border-white/10">
-                    <Key className="w-4 h-4 text-indigo-400" />
-                    <code className="flex-1 text-sm text-gray-300 font-mono">{maskedApiKey}</code>
-                    <button
-                      type="button"
-                      onClick={copyApiKey}
-                      className="text-gray-400 hover:text-white p-1"
-                      title="复制 API Key"
-                    >
-                      <Copy className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
                 <div>
-                  <Label className="text-gray-300">{hasApiKey ? '重新设置 API Key' : '设置 API Key'}</Label>
+                  <Label className="text-gray-300">代理 API Key</Label>
                   <div className="flex gap-2 mt-1">
                     <div className="relative flex-1">
                       <Input
@@ -189,8 +164,8 @@ export default function SettingsPage() {
                         value={apiKey}
                         onChange={(e) => setApiKey(e.target.value)}
                         onBlur={handleApiKeyBlur}
-                        placeholder={hasApiKey ? '输入新 Key 替换当前' : '输入 API Key'}
-                        className="glass-input text-white pr-20"
+                        placeholder="输入或生成 API Key"
+                        className="glass-input text-white pr-24"
                       />
                       <div className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1">
                         <button
@@ -208,18 +183,19 @@ export default function SettingsPage() {
                         >
                           {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
+                        <button
+                          type="button"
+                          onClick={copyApiKey}
+                          className="text-gray-400 hover:text-white p-1"
+                          title="复制 API Key"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
-                    <Button
-                      onClick={handleApiKeySave}
-                      disabled={saving}
-                      className="bg-gradient-to-r from-indigo-500 to-violet-600"
-                    >
-                      {saving ? '保存中...' : '保存'}
-                    </Button>
                   </div>
                   <p className="text-xs text-gray-500 mt-2">
-                    在调用代理接口时需要在 Authorization header 中使用此 Key
+                    用于验证代理请求的身份凭证，失焦自动保存
                   </p>
                 </div>
               </CardContent>
