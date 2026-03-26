@@ -1,11 +1,11 @@
-# BizyAir to OpenAI Proxy Service Design
+# BizyAir to Gemini Proxy Service Design
 
 ## Project Overview
 
-- **Project Name**: BizyAir2OpenAI Proxy
+- **Project Name**: BizyAir2Gemini Proxy
 - **Type**: API Proxy Service + Web Management UI
-- **Core Functionality**: 将 BizyAir API 请求转换为 OpenAI 格式，支持多应用管理、模板配置、请求测试
-- **Target Users**: 需要使用 BizyAir AI 服务并希望以 OpenAI 格式调用的开发者
+- **Core Functionality**: 将 Gemini API 请求转换为 BizyAir 格式，支持多应用管理、模板配置、请求测试
+- **Target Users**: 需要使用 BizyAir AI 服务并希望以 Gemini 格式调用的开发者
 
 ## Technology Stack
 

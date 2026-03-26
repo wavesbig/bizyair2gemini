@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-BizyAir2OpenAI 自动化测试脚本
+BizyAir2Gemini 自动化测试脚本
 测试登录、仪表盘、设置、应用管理页面
 """
 
@@ -105,7 +105,7 @@ def test_console_errors(page):
 
 def main():
     print("=" * 50)
-    print("BizyAir2OpenAI 自动化测试")
+    print("BizyAir2Gemini 自动化测试")
     print("=" * 50)
 
     with sync_playwright() as p:
