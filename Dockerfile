@@ -3,13 +3,15 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# 安装依赖
+# 先复制 package.json 和 prisma schema
 COPY package*.json ./
-RUN npm ci
-
-# 复制 Prisma schema
 COPY prisma ./prisma/
 COPY prisma.config.ts ./
+
+# 安装依赖 (不运行 postinstall)
+RUN npm ci --ignore-scripts
+
+# 生成 Prisma Client
 RUN npx prisma generate
 
 # 复制源代码
@@ -32,6 +34,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./
 
 # 设置环境变量
 ENV NODE_ENV=production
