@@ -2,8 +2,8 @@ import { SignJWT, jwtVerify } from 'jose'
 import { cookies } from 'next/headers'
 import bcrypt from 'bcryptjs'
 
-const secretKey = process.env.ENCRYPTION_KEY || 'default-secret-key-change-in-production'
-const encodedKey = new TextEncoder().encode(secretKey)
+// Fixed key for session signing (do not change after deployment, or existing sessions will invalidate)
+const encodedKey = new TextEncoder().encode('bizyair2gemini-session-secret-key-2024')
 
 export async function encrypt(payload: any) {
   return new SignJWT(payload)

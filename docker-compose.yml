@@ -16,8 +16,6 @@ services:
       - PROXY_API_KEY=${PROXY_API_KEY}
       # 日志级别 (debug, info, warn, error)
       - LOG_LEVEL=${LOG_LEVEL:-info}
-      # 加密密钥
-      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-change-this-in-production}
     volumes:
       # 数据持久化目录
       - ${DATA_DIR:-./data}:/app/data
