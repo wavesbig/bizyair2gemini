@@ -38,6 +38,14 @@ export default function SettingsPage() {
 
       setHasApiKey(result.data.hasApiKey)
       setMaskedApiKey(result.data.apiKey || '')
+
+      // 检查 localStorage 是否有完整的 API Key
+      const storedKey = localStorage.getItem('proxyApiKey')
+      if (!storedKey && result.data.hasApiKey) {
+        // 如果 localStorage 没有但后端有，说明是之前设置的
+        // 提示用户需要重新设置才能复制（安全措施）
+        console.log('API Key stored in backend only, copy will require re-entry')
+      }
     } catch (error) {
       console.error('Failed to fetch settings:', error)
     } finally {
@@ -46,12 +54,17 @@ export default function SettingsPage() {
   }
 
   function copyApiKey() {
-    // 需要获取完整 key，但后端只返回掩码，这里复制掩码
-    navigator.clipboard.writeText(maskedApiKey).then(() => {
-      toast.success('API Key 已复制')
-    }).catch(() => {
-      toast.error('复制失败')
-    })
+    // 从 localStorage 获取完整的 API Key
+    const fullKey = localStorage.getItem('proxyApiKey')
+    if (fullKey) {
+      navigator.clipboard.writeText(fullKey).then(() => {
+        toast.success('API Key 已复制')
+      }).catch(() => {
+        toast.error('复制失败')
+      })
+    } else {
+      toast.error('请先设置 API Key')
+    }
   }
 
   async function handleApiKeySave() {
@@ -71,7 +84,9 @@ export default function SettingsPage() {
       if (response.ok) {
         toast.success('API Key 已保存')
         setHasApiKey(true)
-        // 保存后更新显示的掩码
+        // 保存到 localStorage 以便复制
+        localStorage.setItem('proxyApiKey', apiKey)
+        // 更新显示的掩码
         const masked = `${apiKey.slice(0, 8)}...${apiKey.slice(-4)}`
         setMaskedApiKey(masked)
         setApiKey('')
