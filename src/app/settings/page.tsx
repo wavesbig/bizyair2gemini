@@ -92,13 +92,23 @@ export default function SettingsPage() {
     }
   }
 
-  function generateApiKey() {
-    // 生成 sk- 开头的随机 Key (48位十六进制)
-    const array = new Uint8Array(24)
-    crypto.getRandomValues(array)
-    const key = `sk-${Array.from(array, b => b.toString(16).padStart(2, '0')).join('')}`
-    setApiKey(key)
-    toast.success('已生成新 API Key')
+  async function generateApiKey() {
+    setSaving(true)
+    try {
+      const response = await fetch('/api/settings', { method: 'POST' })
+      if (response.ok) {
+        const data = await response.json()
+        setApiKey(data.apiKey)
+        setMaskedApiKey(data.apiKey)
+        toast.success('已生成新 API Key，请复制保存')
+      } else {
+        toast.error('生成失败')
+      }
+    } catch {
+      toast.error('网络错误')
+    } finally {
+      setSaving(false)
+    }
   }
 
   async function handlePasswordChange() {
