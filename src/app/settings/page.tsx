@@ -35,7 +35,9 @@ export default function SettingsPage() {
         return
       }
 
-      setMaskedApiKey(result.data.apiKey || '')
+      const key = result.data.apiKey || ''
+      setMaskedApiKey(key)
+      setApiKey(key)
     } catch (error) {
       console.error('Failed to fetch settings:', error)
     } finally {
