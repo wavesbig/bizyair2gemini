@@ -78,15 +78,20 @@ export async function POST(
   request: NextRequest,
   context: { params: Promise<{ [key: string]: string }> }
 ) {
+  const startTime = Date.now()
+
   try {
     // 验证 API Key
     const authError = await verifyProxyAuth(request)
     if (authError) {
+      console.warn(`[GenerateContent] Auth failed: ${authError.error}`)
       return NextResponse.json({ error: authError.error }, { status: authError.status })
     }
 
     const { model } = await context.params
     const body = await request.json()
+
+    console.info(`[GenerateContent] Request received for model: ${model}`)
 
     // 根据 model 查找应用
     const app = await prisma.application.findFirst({
@@ -97,11 +102,14 @@ export async function POST(
     })
 
     if (!app) {
+      console.warn(`[GenerateContent] Model not found: ${model}`)
       return NextResponse.json(
         { error: `Model '${model}' not found` },
         { status: 404 }
       )
     }
+
+    console.info(`[GenerateContent] App found: ${app.name} (${app.id})`)
 
     // 获取映射规则和节点 ID
     let mappings: Record<string, string> = {}
@@ -138,10 +146,8 @@ export async function POST(
       input_values: inputValues,
     }
 
-    // 发送请求到 BizyAir
-    console.log('=== BizyAir Request ===')
-    console.log('URL:', 'https://api.bizyair.cn/w/v1/webapp/task/openapi/create')
-    console.log('Body:', JSON.stringify(bizyairRequest, null, 2))
+    console.info(`[GenerateContent] Forwarding to BizyAir: web_app_id=${app.webAppId}`)
+    console.debug(`[GenerateContent] BizyAir request body:`, JSON.stringify(bizyairRequest))
 
     const response = await fetch(
       'https://api.bizyair.cn/w/v1/webapp/task/openapi/create',
@@ -156,8 +162,9 @@ export async function POST(
     )
 
     const result = await response.json()
-    console.log('=== BizyAir Response ===')
-    console.log(JSON.stringify(result, null, 2))
+    const duration = Date.now() - startTime
+
+    console.info(`[GenerateContent] BizyAir response received in ${duration}ms, status=${result.status || result.code}`)
 
     // 返回 Gemini 格式响应
     if (result.code === 0 || result.success || result.status === 'Success') {
