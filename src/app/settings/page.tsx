@@ -60,6 +60,11 @@ export default function SettingsPage() {
   async function saveApiKey(key: string) {
     if (!key.trim()) return
 
+    // 如果和当前保存的值一样，不调用接口
+    if (key === maskedApiKey) {
+      return
+    }
+
     setSaving(true)
     try {
       const response = await fetch('/api/settings', {
@@ -71,7 +76,6 @@ export default function SettingsPage() {
       if (response.ok) {
         toast.success('API Key 已保存')
         setMaskedApiKey(key)
-        setApiKey('')
       } else {
         toast.error('保存失败')
       }
@@ -83,7 +87,7 @@ export default function SettingsPage() {
   }
 
   function handleApiKeyBlur() {
-    if (apiKey.trim()) {
+    if (apiKey.trim() && apiKey !== maskedApiKey) {
       saveApiKey(apiKey)
     }
   }
