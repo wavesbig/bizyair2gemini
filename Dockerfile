@@ -38,6 +38,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
+ENV DATABASE_URL="file:/app/data/dev.db"
 
 USER nextjs
 

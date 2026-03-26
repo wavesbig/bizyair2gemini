@@ -8,8 +8,6 @@ services:
     ports:
       - "${APP_PORT:-3000}:3000"
     environment:
-      # 数据库
-      - DATABASE_URL=file:${DATA_DIR:-/app/data}/dev.db
       # 管理密码
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
       # 代理 API Key
