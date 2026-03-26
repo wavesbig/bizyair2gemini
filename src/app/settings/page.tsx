@@ -57,25 +57,21 @@ export default function SettingsPage() {
     }
   }
 
-  async function handleApiKeySave() {
-    if (!apiKey.trim()) {
-      toast.error('请输入 API Key')
-      return
-    }
+  async function saveApiKey(key: string) {
+    if (!key.trim()) return
 
     setSaving(true)
     try {
       const response = await fetch('/api/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ apiKey }),
+        body: JSON.stringify({ apiKey: key }),
       })
 
       if (response.ok) {
         toast.success('API Key 已保存')
         setHasApiKey(true)
-        // 直接使用完整的 API Key
-        setMaskedApiKey(apiKey)
+        setMaskedApiKey(key)
         setApiKey('')
       } else {
         toast.error('保存失败')
@@ -85,6 +81,20 @@ export default function SettingsPage() {
     } finally {
       setSaving(false)
     }
+  }
+
+  function handleApiKeyBlur() {
+    if (apiKey.trim()) {
+      saveApiKey(apiKey)
+    }
+  }
+
+  async function handleApiKeySave() {
+    if (!apiKey.trim()) {
+      toast.error('请输入 API Key')
+      return
+    }
+    await saveApiKey(apiKey)
   }
 
   function generateApiKey() {
@@ -178,6 +188,7 @@ export default function SettingsPage() {
                         type={showApiKey ? 'text' : 'password'}
                         value={apiKey}
                         onChange={(e) => setApiKey(e.target.value)}
+                        onBlur={handleApiKeyBlur}
                         placeholder={hasApiKey ? '输入新 Key 替换当前' : '输入 API Key'}
                         className="glass-input text-white pr-20"
                       />
