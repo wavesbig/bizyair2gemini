@@ -11,7 +11,6 @@ import { Key, Lock, Eye, EyeOff, RefreshCw, Copy } from 'lucide-react'
 import { safeFetch } from '@/lib/safeFetch'
 
 export default function SettingsPage() {
-  const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [maskedApiKey, setMaskedApiKey] = useState('')
   const [showApiKey, setShowApiKey] = useState(false)
@@ -40,8 +39,6 @@ export default function SettingsPage() {
       setApiKey(key)
     } catch (error) {
       console.error('Failed to fetch settings:', error)
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -153,9 +150,9 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen flex-col gap-6 px-4 py-4 lg:flex-row lg:items-start lg:px-6">
       <Sidebar />
-      <main className="flex-1 ml-64 p-8">
+      <main className="flex-1 py-2 lg:py-4">
         <div className="max-w-2xl mx-auto">
           <h1 className="text-3xl font-bold text-white mb-8">设置</h1>
 

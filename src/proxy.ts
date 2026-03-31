@@ -4,7 +4,7 @@ import { decrypt } from '@/lib/auth'
 // 公开路径
 const publicPaths = ['/login', '/api/auth/login', '/api/v1', '/api/v1beta']
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // 公开路径直接放行

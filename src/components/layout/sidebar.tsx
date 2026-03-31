@@ -31,42 +31,49 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="w-64 h-screen glass-card fixed left-0 top-0 flex flex-col">
-      <div className="p-6 border-b border-white/10">
-        <h1 className="text-xl font-bold text-white">BizyAir Proxy</h1>
-        <p className="text-xs text-gray-400 mt-1">API 转换服务</p>
-      </div>
+    <aside className="w-full shrink-0 lg:sticky lg:top-4 lg:w-64 lg:self-start">
+      <div className="glass-card relative flex max-h-[calc(100vh-2rem)] min-h-[calc(100vh-2rem)] flex-col overflow-hidden rounded-[28px] border-white/10 bg-slate-950/60 shadow-[0_22px_70px_-38px_rgba(34,211,238,0.35)] backdrop-blur-2xl">
+        <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/70 to-transparent" />
+        <div className="pointer-events-none absolute -right-12 top-10 size-28 rounded-full bg-cyan-400/12 blur-3xl" />
+        <div className="pointer-events-none absolute -left-12 bottom-14 size-24 rounded-full bg-violet-400/12 blur-3xl" />
 
-      <nav className="flex-1 p-4 space-y-2">
-        {navItems.map((item) => {
-          const Icon = item.icon
-          const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200',
-                isActive
-                  ? 'bg-gradient-to-r from-indigo-500/20 to-violet-500/20 text-white border border-indigo-500/30'
-                  : 'text-gray-400 hover:text-white hover:bg-white/5'
-              )}
-            >
-              <Icon className="w-5 h-5" />
-              <span>{item.label}</span>
-            </Link>
-          )
-        })}
-      </nav>
+        <div className="border-b border-white/10 px-5 py-5">
+          <p className="text-[11px] uppercase tracking-[0.3em] text-cyan-200/80">Control Deck</p>
+          <h1 className="mt-2 text-xl font-bold text-white">BizyAir Proxy</h1>
+        </div>
 
-      <div className="p-4 border-t border-white/10">
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-3 px-4 py-3 rounded-lg w-full text-gray-400 hover:text-white hover:bg-white/5 transition-all duration-200"
-        >
-          <LogOut className="w-5 h-5" />
-          <span>退出登录</span>
-        </button>
+        <nav className="flex flex-wrap gap-2 p-3 lg:flex-1 lg:flex-col lg:overflow-y-auto">
+          {navItems.map((item) => {
+            const Icon = item.icon
+            const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  'group flex min-h-11 flex-1 items-center gap-3 rounded-2xl border px-3.5 py-2.5 text-sm transition-all duration-200 lg:flex-none',
+                  isActive
+                    ? 'border-cyan-300/25 bg-gradient-to-r from-cyan-400/16 via-sky-400/12 to-violet-400/14 text-white shadow-[0_14px_34px_-24px_rgba(34,211,238,0.8)]'
+                    : 'border-white/6 bg-white/[0.03] text-slate-400 hover:-translate-y-0.5 hover:border-white/12 hover:bg-white/[0.06] hover:text-white'
+                )}
+              >
+                <Icon className="size-5" aria-hidden="true" />
+                <span className="truncate">{item.label}</span>
+              </Link>
+            )
+          })}
+        </nav>
+
+        <div className="border-t border-white/10 p-3">
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="flex w-full items-center gap-3 rounded-2xl border border-white/8 bg-white/[0.03] px-3.5 py-2.5 text-left text-sm text-slate-400 transition-all duration-200 hover:-translate-y-0.5 hover:border-white/14 hover:bg-white/[0.06] hover:text-white"
+          >
+            <LogOut className="size-5" aria-hidden="true" />
+            <span>退出登录</span>
+          </button>
+        </div>
       </div>
     </aside>
   )

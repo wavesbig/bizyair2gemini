@@ -22,9 +22,8 @@ interface App {
 
 export default function TestPage() {
   const [apps, setApps] = useState<App[]>([])
-  const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
-  const [response, setResponse] = useState<any>(null)
+  const [response, setResponse] = useState<unknown>(null)
   const [selectedApp, setSelectedApp] = useState('')
   const [proxyApiKey, setProxyApiKey] = useState('')
 
@@ -75,8 +74,6 @@ export default function TestPage() {
       }
     } catch (error) {
       console.error('Failed to fetch apps:', error)
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -157,9 +154,9 @@ export default function TestPage() {
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen flex-col gap-6 px-4 py-4 lg:flex-row lg:items-start lg:px-6">
       <Sidebar />
-      <main className="flex-1 ml-64 p-8">
+      <main className="flex-1 py-2 lg:py-4">
         <div className="max-w-6xl mx-auto">
           <h1 className="text-3xl font-bold text-white mb-8">Gemini API 测试</h1>
 

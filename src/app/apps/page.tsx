@@ -71,9 +71,9 @@ export default function AppsPage() {
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen flex-col gap-6 px-4 py-4 lg:flex-row lg:items-start lg:px-6">
       <Sidebar />
-      <main className="flex-1 ml-64 p-8">
+      <main className="flex-1 py-2 lg:py-4">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-3xl font-bold text-white">应用管理</h1>

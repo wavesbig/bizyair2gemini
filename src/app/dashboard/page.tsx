@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import { Sidebar } from '@/components/layout/sidebar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -15,12 +15,27 @@ interface DashboardApp {
   mappings: string
 }
 
+const FALLBACK_ORIGIN = 'https://your-production-domain.com'
+
+function subscribeToOrigin() {
+  return () => {}
+}
+
+function getClientOrigin() {
+  return window.location.origin
+}
+
+function getServerOrigin() {
+  return FALLBACK_ORIGIN
+}
+
 export default function DashboardPage() {
   const [stats, setStats] = useState({
     apps: 0,
     activeApps: 0,
   })
   const [sampleApp, setSampleApp] = useState<{ modelName: string; mappings: string } | null>(null)
+  const origin = useSyncExternalStore(subscribeToOrigin, getClientOrigin, getServerOrigin)
 
   useEffect(() => {
     async function fetchStats() {
@@ -47,7 +62,7 @@ export default function DashboardPage() {
     fetchStats()
   }, [])
 
-  const usage = buildDashboardUsage(sampleApp ?? undefined, typeof window !== 'undefined' ? window.location.origin : undefined)
+  const usage = buildDashboardUsage(sampleApp ?? undefined, origin)
 
   function handleCopy(label: string, value: string) {
     navigator.clipboard.writeText(value).then(() => {
@@ -73,9 +88,9 @@ export default function DashboardPage() {
   ]
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen flex-col gap-6 px-4 py-4 lg:flex-row lg:items-start lg:px-6">
       <Sidebar />
-      <main className="ml-64 flex-1 p-8">
+      <main className="flex-1 py-2 lg:py-4">
         <div className="mx-auto flex max-w-6xl flex-col gap-8">
           <div className="flex items-end justify-between gap-6">
             <div className="space-y-3">
@@ -92,7 +107,7 @@ export default function DashboardPage() {
             </div>
             <div className="hidden rounded-3xl border border-cyan-400/20 bg-cyan-400/8 px-5 py-4 text-right lg:block">
               <p className="text-xs uppercase tracking-[0.24em] text-cyan-200">Base URL</p>
-              <p className="mt-2 font-mono text-sm text-white">{typeof window !== 'undefined' ? window.location.origin : 'https://your-production-domain.com'}</p>
+              <p className="mt-2 font-mono text-sm text-white">{origin}</p>
             </div>
           </div>
 
