@@ -112,7 +112,7 @@ if (-not $NoLogin) {
 }
 
 Write-Host "Building image $versionTag ..."
-Invoke-NativeStep "Docker build failed." { docker build -t $versionTag $projectRoot }
+Invoke-NativeStep "Docker build failed." { docker build --build-arg APP_VERSION=$Version -t $versionTag $projectRoot }
 
 Write-Host "Pushing image $versionTag ..."
 Invoke-NativeStep "Docker push failed." { docker push $versionTag }

@@ -2,6 +2,8 @@
 FROM node:20-bookworm-slim AS builder
 
 WORKDIR /app
+ARG APP_VERSION=0.0.0
+ENV NEXT_PUBLIC_APP_VERSION=${APP_VERSION}
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
   ca-certificates \
@@ -54,6 +56,8 @@ ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 ENV DATABASE_URL="file:/app/data/dev.db"
+ARG APP_VERSION=0.0.0
+ENV NEXT_PUBLIC_APP_VERSION=${APP_VERSION}
 
 RUN chmod +x /app/docker/entrypoint.sh
 

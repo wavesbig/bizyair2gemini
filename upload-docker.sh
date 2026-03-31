@@ -103,7 +103,7 @@ if [ "$NO_LOGIN" != "true" ]; then
 fi
 
 echo "Building image ${VERSION_TAG} ..."
-docker build -t "${VERSION_TAG}" "$SCRIPT_DIR"
+docker build --build-arg APP_VERSION="${VERSION}" -t "${VERSION_TAG}" "$SCRIPT_DIR"
 
 echo "Pushing image ${VERSION_TAG} ..."
 docker push "${VERSION_TAG}"

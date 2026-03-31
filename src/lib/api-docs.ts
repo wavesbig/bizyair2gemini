@@ -59,7 +59,7 @@ export function buildAppCurl(app: ApiDocApp, origin?: string) {
         "aspectRatio": "1:1",
         "imageSize": "1024"
       },
-      "seed": 12345,z 
+      "seed": 12345,
       "temperature": 0.8,
       "topP": 0.95
     }
