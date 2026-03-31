@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
-import { Send, Loader2, ShieldCheck } from 'lucide-react'
+import { Send, Loader2, ShieldCheck, Copy } from 'lucide-react'
 import CodeEditor from '@uiw/react-textarea-code-editor'
 import { safeFetch } from '@/lib/safeFetch'
 
@@ -70,6 +70,20 @@ export default function TestPage() {
       }
     } catch (error) {
       console.error('Failed to fetch apps:', error)
+    }
+  }
+
+  async function handleCopyResponse() {
+    if (!response) {
+      toast.error('暂无可复制的响应结果')
+      return
+    }
+
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(response, null, 2))
+      toast.success('响应结果已复制')
+    } catch {
+      toast.error('复制失败')
     }
   }
 
@@ -261,8 +275,20 @@ export default function TestPage() {
             </Card>
 
             <Card className="glass-card">
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-white">响应结果</CardTitle>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyResponse}
+                  disabled={!response}
+                  className="border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20 disabled:opacity-40"
+                  aria-label="复制响应结果"
+                >
+                  <Copy data-icon="inline-start" aria-hidden="true" />
+                  复制
+                </Button>
               </CardHeader>
               <CardContent>
                 {response ? (

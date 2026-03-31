@@ -1,50 +1,189 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BizyAir Proxy (Gemini / OpenAI Compatible)
 
-## Docker Quick Start
+一个基于 Next.js + Prisma 的 BizyAir 代理服务，提供：
 
-This project can be distributed as a Docker image for other users to run directly with Docker Compose.
+- 管理后台（应用管理、字段映射、测试页、设置页）
+- 对外代理 API（`/api/v1`、`/api/v1beta`）
+- 字段映射与节点绑定（将外部请求转换为 BizyAir `input_values`）
+- Docker 一键部署与镜像发布脚本
 
-1. Copy the environment template:
+---
+
+## 1. 核心能力
+
+- 支持 OpenAI 风格接口：`/api/v1/chat/completions`
+- 支持 Gemini 风格接口：`/api/v1beta/models/:model/generateContent`
+- 支持模型列表接口：`/api/v1/models`
+- 应用级映射配置：`sourcePath -> BizyAir 字段 key`
+- 支持从 BizyAir 配置片段导入并提取真实字段前缀（节点绑定）
+- 后台统一管理 `Proxy API Key`、管理员密码、应用启停状态
+
+---
+
+## 2. 技术栈
+
+- Next.js 16 (App Router)
+- React 19
+- Prisma 5 + SQLite
+- shadcn/base UI
+- Docker + Docker Compose
+
+---
+
+## 3. 目录说明
+
+关键目录：
+
+- `src/app`：页面与 API 路由
+- `src/components`：界面组件（包含应用管理与布局）
+- `src/lib`：通用逻辑（鉴权、Prisma、文档构建、节点绑定等）
+- `prisma`：schema、迁移、seed
+- `docker`：容器入口脚本
+- `scripts`：发布相关脚本
+
+---
+
+## 4. 本地开发
+
+### 4.1 安装依赖
+
+```bash
+npm install
+```
+
+### 4.2 初始化数据库
+
+```bash
+npm run db:init
+```
+
+### 4.3 启动开发环境
+
+```bash
+npm run dev
+```
+
+默认访问：
+
+- 后台：`http://localhost:3000`
+
+---
+
+## 5. 环境变量
+
+请基于 `.env.example` 创建 `.env`：
 
 ```bash
 cp .env.example .env
 ```
 
-2. Update `IMAGE_NAME`, `ADMIN_PASSWORD`, and `PROXY_API_KEY` in `.env`.
+主要变量：
 
-3. Start the service:
+- `IMAGE_NAME`：Docker Compose 拉取镜像名
+- `APP_PORT`：容器映射端口
+- `DATA_DIR`：SQLite 数据持久化目录
+- `ADMIN_PASSWORD`：后台登录密码
+- `PROXY_API_KEY`：对外代理接口密钥（`Authorization: Bearer ...`）
+- `LOG_LEVEL`：日志级别
+
+---
+
+## 6. Docker 部署
+
+### 6.1 快速启动
 
 ```bash
+cp .env.example .env
 docker compose up -d
 ```
 
-4. Open `http://localhost:3000`.
+服务会在首次启动时自动执行：
 
-The container will automatically initialize `/app/data/dev.db` on first start when the mounted data directory is empty.
+- `prisma migrate deploy`
+- `prisma db seed`
 
-## Docker Hub Publish
+数据落在挂载目录（默认 `./data`）。
 
-Replace `your-dockerhub-user` with your Docker Hub namespace:
+### 6.2 健康检查
+
+健康检查接口：
+
+- `GET /api/health`
+
+Compose 和镜像均已内置健康检查策略。
+
+---
+
+## 7. 对外 API 用法
+
+### 7.1 查询可用模型
 
 ```bash
-docker login
-docker build -t your-dockerhub-user/bizyair2gemini:latest .
-docker push your-dockerhub-user/bizyair2gemini:latest
+curl -X GET "https://your-domain.com/api/v1/models" \
+  -H "Authorization: Bearer YOUR_PROXY_API_KEY"
 ```
 
-If you want to publish a versioned tag too:
+### 7.2 Gemini 风格请求
 
 ```bash
-docker build -t your-dockerhub-user/bizyair2gemini:0.1.0 -t your-dockerhub-user/bizyair2gemini:latest .
-docker push your-dockerhub-user/bizyair2gemini:0.1.0
-docker push your-dockerhub-user/bizyair2gemini:latest
+curl -X POST "https://your-domain.com/api/v1beta/models/your-model-name/generateContent" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_PROXY_API_KEY" \
+  -d '{
+    "contents": [
+      {
+        "parts": [
+          { "text": "一只站在霓虹雨夜街头的橘猫，电影感，细节丰富" }
+        ]
+      }
+    ],
+    "generationConfig": {
+      "imageConfig": { "aspectRatio": "1:1", "imageSize": "1024" },
+      "seed": 12345,
+      "temperature": 0.8,
+      "topP": 0.95
+    }
+  }'
 ```
 
-## One-Click Upload Scripts
+### 7.3 OpenAI 风格请求
 
-Before first use on each device, create `.docker-publish.json` from `.docker-publish.example.json` and fill in your Docker Hub username once.
+```bash
+curl -X POST "https://your-domain.com/api/v1/chat/completions" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_PROXY_API_KEY" \
+  -d '{
+    "model": "your-model-name",
+    "messages": [
+      { "role": "user", "content": "请生成一张图片：美丽的日落" }
+    ],
+    "temperature": 0.8
+  }'
+```
 
-Example:
+---
+
+## 8. 映射与节点绑定机制
+
+应用配置里有两块关键数据：
+
+- `mappings`：字段映射规则（JSON 字符串）
+- `nodeIds`：节点与字段绑定信息（JSON 字符串）
+
+当前支持两类占位符：
+
+- 旧占位符（兼容）：`{PromptNode}`、`{LoadImage_1}`、`{TTSNode}`
+- 新占位符（推荐）：`{PromptField:prompt}`、`{LoadImageField:1}`、`{TTSField:text}`
+
+运行时会先替换占位符，再把请求体字段映射到 BizyAir 的 `input_values`。
+
+---
+
+## 9. 镜像发布
+
+### 9.1 首次配置（每台设备一次）
+
+复制 `.docker-publish.example.json` 为 `.docker-publish.json` 并填写：
 
 ```json
 {
@@ -53,65 +192,63 @@ Example:
 }
 ```
 
-Windows PowerShell:
+### 9.2 Windows
 
 ```powershell
 .\upload-docker.ps1 -AlsoLatest
 ```
 
-macOS / Linux:
+### 9.3 macOS / Linux
 
 ```bash
 chmod +x ./upload-docker.sh
 ./upload-docker.sh --also-latest
 ```
 
-By default, each upload auto-increments the patch version in `package.json` and uses that version as the image tag.
+发布脚本特性：
 
-If you want to force a specific version, pass `-Version 0.1.0` on Windows or `--version 0.1.0` on macOS/Linux.
+- 自动递增补丁版本号（`x.y.z`）
+- 发布成功后才写回 `package.json` 版本
+- 预检 Docker / 登录状态 / Git 工作区
+- 支持 `latest` 标签同步推送
 
-If you are already logged in to Docker Hub, add `-NoLogin` on Windows or `--no-login` on macOS/Linux.
+常用参数：
 
-The scripts now run a preflight check before publishing:
+- Windows: `-Version 0.1.0`, `-NoLogin`, `-AllowDirty`
+- macOS/Linux: `--version 0.1.0`, `--no-login`, `--allow-dirty`
 
-- verify Docker CLI is installed
-- verify Docker daemon is running
-- verify Docker Hub credentials are present unless login is skipped
-- verify the git working tree is clean
+---
 
-If you intentionally want to publish from a dirty working tree, add `-AllowDirty` on Windows or `--allow-dirty` on macOS/Linux.
+## 10. 安全建议
 
-## Getting Started
+- 不要提交数据库文件：`dev.db`、`prisma/dev.db`
+- 不要将真实 `PROXY_API_KEY` 写入公开仓库
+- 若疑似泄露，请立即轮换：
+  - BizyAir 上游 `apiKey`
+  - 本服务 `PROXY_API_KEY`
+  - 管理员密码
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 11. 常见问题
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 11.1 容器显示 `unhealthy`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+优先检查：
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. `/api/health` 能否访问
+2. `DATABASE_URL` 与数据目录挂载是否正确
+3. 容器日志里是否有 Prisma 初始化错误
 
-## Learn More
+### 11.2 登录或代理请求 401
 
-To learn more about Next.js, take a look at the following resources:
+分别检查：
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- 后台登录：`ADMIN_PASSWORD`
+- 对外代理：请求头 `Authorization: Bearer YOUR_PROXY_API_KEY`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## 12. License
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+如需开源协议，请在仓库补充 `LICENSE` 文件并在此处声明。
