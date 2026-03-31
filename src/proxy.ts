@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { decrypt } from '@/lib/auth'
 
 // 公开路径
-const publicPaths = ['/login', '/api/auth/login', '/api/v1', '/api/v1beta']
+const publicPaths = ['/login', '/api/auth/login', '/api/health', '/api/v1', '/api/v1beta']
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
