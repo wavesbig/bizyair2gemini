@@ -195,14 +195,14 @@ curl -X POST "https://your-domain.com/api/v1/chat/completions" \
 ### 9.2 Windows
 
 ```powershell
-.\upload-docker.ps1 -AlsoLatest
+ .\upload-docker.ps1 -AlsoLatest -AllowDirty
 ```
 
 ### 9.3 macOS / Linux
 
 ```bash
 chmod +x ./upload-docker.sh
-./upload-docker.sh --also-latest
+./upload-docker.sh --also-latest --allow-dirty
 ```
 
 发布脚本特性：

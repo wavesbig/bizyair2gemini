@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     try {
       nodeIds = JSON.parse(app.nodeIds || '{}')
     } catch {
-      nodeIds = {}
+      nodeIds = { LoadImage: [], PromptNode: [], TTSNode: [] }
     }
 
     // 替换映射中的占位符
