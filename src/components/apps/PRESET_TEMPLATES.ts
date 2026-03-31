@@ -59,8 +59,10 @@ export const PRESET_TEMPLATES = {
 
 export type PresetTemplateKey = keyof typeof PRESET_TEMPLATES
 
+type InputValuesMap = Record<string, unknown>
+
 // 从 input_values 中提取节点 ID，按类型分组
-export function extractNodeIds(inputValues: Record<string, any>): {
+export function extractNodeIds(inputValues: InputValuesMap): {
   nodeIds: Record<string, string[]>
   nodeTypes: Record<string, string>
 } {
@@ -102,38 +104,4 @@ export function extractNodeIds(inputValues: Record<string, any>): {
   nodeIds.TTSNode.sort((a, b) => parseInt(a) - parseInt(b))
 
   return { nodeIds, nodeTypes }
-}
-
-// 替换映射中的占位符为实际节点 ID
-export function replacePlaceholders(
-  mapping: Record<string, string>,
-  nodeIds: Record<string, string[]>
-): Record<string, string> {
-  const result: Record<string, string> = {}
-
-  for (const [source, target] of Object.entries(mapping)) {
-    let replaced = target
-
-    // 替换 LoadImage_N 占位符
-    for (let i = 0; i < nodeIds.LoadImage.length; i++) {
-      const placeholder = `{LoadImage_${i + 1}}`
-      if (replaced.includes(placeholder)) {
-        replaced = replaced.replace(placeholder, nodeIds.LoadImage[i])
-      }
-    }
-
-    // 替换 PromptNode 占位符
-    if (nodeIds.PromptNode.length > 0) {
-      replaced = replaced.replace('{PromptNode}', nodeIds.PromptNode[0])
-    }
-
-    // 替换 TTSNode 占位符
-    if (nodeIds.TTSNode.length > 0) {
-      replaced = replaced.replace('{TTSNode}', nodeIds.TTSNode[0])
-    }
-
-    result[source] = replaced
-  }
-
-  return result
 }

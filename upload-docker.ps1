@@ -37,6 +37,19 @@ function Test-DockerLogin {
   }
 }
 
+function Invoke-NativeStep {
+  param(
+    [string]$ErrorMessage,
+    [scriptblock]$Command
+  )
+
+  & $Command
+
+  if ($LASTEXITCODE -ne 0) {
+    Write-Error $ErrorMessage
+  }
+}
+
 $config = Get-PublishConfig
 $dockerUser = if ($config -and $config.dockerUser) { [string]$config.dockerUser } else { [string]$env:DOCKERHUB_USER }
 $projectRoot = $PSScriptRoot
@@ -95,22 +108,22 @@ Write-Host "Version tag: $versionTag"
 
 if (-not $NoLogin) {
   Write-Host "Logging in to Docker Hub..."
-  docker login
+  Invoke-NativeStep "Docker login failed." { docker login }
 }
 
 Write-Host "Building image $versionTag ..."
-docker build -t $versionTag $projectRoot
+Invoke-NativeStep "Docker build failed." { docker build -t $versionTag $projectRoot }
 
 Write-Host "Pushing image $versionTag ..."
-docker push $versionTag
+Invoke-NativeStep "Docker push failed." { docker push $versionTag }
 
 if ($AlsoLatest -and $Version -ne "latest") {
   $latestTag = "$repo`:latest"
   Write-Host "Tagging $versionTag as $latestTag ..."
-  docker tag $versionTag $latestTag
+  Invoke-NativeStep "Docker tag failed." { docker tag $versionTag $latestTag }
 
   Write-Host "Pushing image $latestTag ..."
-  docker push $latestTag
+  Invoke-NativeStep "Docker push for latest tag failed." { docker push $latestTag }
 }
 
 Write-Host "Persisting version $Version to package.json ..."

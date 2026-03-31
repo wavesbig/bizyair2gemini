@@ -1,6 +1,9 @@
 #!/bin/sh
 set -e
 
-npm run db:init
+mkdir -p /app/data
+chown -R nextjs:nodejs /app/data
 
-exec node /app/server.js
+gosu nextjs npm run db:init
+
+exec gosu nextjs node /app/server.js

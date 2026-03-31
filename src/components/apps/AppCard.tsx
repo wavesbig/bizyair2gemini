@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { Edit, Trash2, Key, Copy, Terminal } from 'lucide-react'
+import { buildAppCurl, inferApiStyle } from '@/lib/api-docs'
 
 export interface App {
   id: string
@@ -26,63 +27,57 @@ interface AppCardProps {
 
 export function AppCard({ app, onEdit, onDelete, onCopy }: AppCardProps) {
   function generateCurl() {
-    let mappings: Record<string, string> = {}
-    try {
-      mappings = JSON.parse(app.mappings || '{}')
-    } catch { /* ignore */ }
-
-    const sampleParams = Object.keys(mappings)
-
-    const paramsStr = sampleParams.length > 0
-      ? `,\n  ${sampleParams.map(k => `"${k}": "<${k}的值>"`).join(',\n  ')}`
-      : ''
-
-    const curl = `curl -X POST http://your-domain.com/api/v1beta/models/${app.modelName}/generateContent \\
-  -H "Authorization: Bearer YOUR_PROXY_API_KEY" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-  "contents": [{"parts": [{"text": "Your prompt here"}]}]${paramsStr}
-}'`
+    const curl = buildAppCurl(app, window.location.origin)
+    const style = inferApiStyle(app)
 
     navigator.clipboard.writeText(curl).then(() => {
-      toast.success('curl 命令已复制到剪贴板')
+      toast.success(`${style === 'gemini' ? 'Gemini' : 'OpenAI'} 生产 curl 已复制`)
     }).catch(() => {
       toast.error('复制失败')
     })
   }
 
   return (
-    <Card className="glass-card border-white/10 bg-slate-900/50 backdrop-blur-sm hover:bg-slate-900/70 transition-colors">
+    <Card className="glass-card border-white/10 bg-slate-900/50 backdrop-blur-sm transition-colors hover:bg-slate-900/70">
       <CardHeader className="flex flex-row items-center justify-between">
-        <div className="space-y-1">
+        <div className="min-w-0 space-y-1">
           <CardTitle className="text-white text-lg">{app.name}</CardTitle>
-          <p className="text-sm text-slate-400">
-            Model: <code className="px-1.5 py-0.5 rounded bg-white/10 text-indigo-300 font-mono text-xs">{app.modelName}</code>
+          <p className="min-w-0 text-sm text-slate-400">
+            Model: <code className="ml-1 rounded bg-white/10 px-1.5 py-0.5 font-mono text-xs text-indigo-300 break-words">{app.modelName}</code>
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${app.isActive ? 'bg-emerald-500 shadow-lg shadow-emerald-500/50' : 'bg-slate-500'}`} />
+          <div className={`size-2 rounded-full ${app.isActive ? 'bg-emerald-500 shadow-lg shadow-emerald-500/50' : 'bg-slate-500'}`} />
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="flex flex-col gap-4">
         {app.description && (
           <p className="text-slate-400 text-sm">{app.description}</p>
         )}
         <div className="flex items-center gap-2 text-sm text-slate-400">
-          <Key className="w-4 h-4 text-slate-500" />
+          <Key className="size-4 text-slate-500" aria-hidden="true" />
           <span>Web App ID: <span className="text-slate-300 font-mono">{app.webAppId}</span></span>
         </div>
-        <div className="p-2 rounded bg-black/30 text-xs text-slate-400 font-mono max-h-20 overflow-hidden">
+        <div className="max-h-20 overflow-hidden rounded bg-black/30 p-2 font-mono text-xs text-slate-400">
           {app.mappings || '{}'}
         </div>
-        <div className="flex gap-2 pt-2">
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+          <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Production Endpoint</p>
+          <p className="mt-2 break-words font-mono text-xs leading-5 text-cyan-200">
+            {inferApiStyle(app) === 'gemini'
+              ? `/api/v1beta/models/${app.modelName}/generateContent`
+              : '/api/v1/chat/completions'}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2 pt-2">
           <Button
             variant="outline"
             size="sm"
             onClick={() => onCopy(app)}
             className="border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20"
+            aria-label={`复制应用 ${app.name}`}
           >
-            <Copy className="w-4 h-4 mr-1" />
+            <Copy data-icon="inline-start" aria-hidden="true" />
             复制
           </Button>
           <Button
@@ -90,8 +85,9 @@ export function AppCard({ app, onEdit, onDelete, onCopy }: AppCardProps) {
             size="sm"
             onClick={() => onEdit(app)}
             className="border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20"
+            aria-label={`编辑应用 ${app.name}`}
           >
-            <Edit className="w-4 h-4 mr-1" />
+            <Edit data-icon="inline-start" aria-hidden="true" />
             编辑
           </Button>
           <Button
@@ -99,17 +95,19 @@ export function AppCard({ app, onEdit, onDelete, onCopy }: AppCardProps) {
             size="sm"
             onClick={generateCurl}
             className="border-white/10 text-indigo-400 hover:bg-indigo-500/20 hover:border-indigo-500/30"
+            aria-label={`复制 ${app.name} 的生产 curl`}
           >
-            <Terminal className="w-4 h-4 mr-1" />
-            curl
+            <Terminal data-icon="inline-start" aria-hidden="true" />
+            复制 Curl
           </Button>
           <Button
             variant="outline"
             size="sm"
             onClick={() => onDelete(app.id)}
             className="border-white/10 text-red-400 hover:bg-red-500/20 hover:border-red-500/30 ml-auto"
+            aria-label={`删除应用 ${app.name}`}
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 aria-hidden="true" />
           </Button>
         </div>
       </CardContent>

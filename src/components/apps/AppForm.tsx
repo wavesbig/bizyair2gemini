@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -30,6 +30,15 @@ interface AppFormProps {
   onSuccess: () => void
 }
 
+interface ImportedConfig {
+  web_app_id?: string | number
+  input_values?: Record<string, unknown>
+}
+
+function isImportedConfig(value: unknown): value is ImportedConfig {
+  return typeof value === 'object' && value !== null
+}
+
 export function AppForm({ open, onOpenChange, editingApp, onSuccess }: AppFormProps) {
   const [loading, setLoading] = useState(false)
   const [selectedPreset, setSelectedPreset] = useState<string>('')
@@ -50,13 +59,7 @@ export function AppForm({ open, onOpenChange, editingApp, onSuccess }: AppFormPr
   const [importCode, setImportCode] = useState('')
   const [showImport, setShowImport] = useState(false)
 
-  useEffect(() => {
-    if (open) {
-      resetForm()
-    }
-  }, [open, editingApp])
-
-  function resetForm() {
+  const resetForm = useCallback(() => {
     setSelectedPreset('')
     setNodeIdsData({ LoadImage: [], PromptNode: [], TTSNode: [] })
     if (editingApp) {
@@ -85,7 +88,13 @@ export function AppForm({ open, onOpenChange, editingApp, onSuccess }: AppFormPr
       })
       setMappingsJson('{\n  \n}')
     }
-  }
+  }, [editingApp])
+
+  useEffect(() => {
+    if (open) {
+      resetForm()
+    }
+  }, [open, resetForm])
 
   function applyPreset(presetKey: string) {
     const preset = PRESET_TEMPLATES[presetKey as keyof typeof PRESET_TEMPLATES]
@@ -114,7 +123,7 @@ export function AppForm({ open, onOpenChange, editingApp, onSuccess }: AppFormPr
   function parseImportCode(code: string) {
     try {
       let webAppId = ''
-      let inputValues: Record<string, any> = {}
+      let inputValues: Record<string, unknown> = {}
 
       // 1. 尝试解析 JSON.stringify 格式
       const stringifyMatch = code.match(/JSON\.stringify\s*\(\s*(\{[\s\S]*?\})\s*\)/)
@@ -126,7 +135,7 @@ export function AppForm({ open, onOpenChange, editingApp, onSuccess }: AppFormPr
           }
           const inputValuesMatch = stringifyMatch[1].match(/input_values["\s:]*(\{[\s\S]*?\})\s*[,}]/)
           if (inputValuesMatch) {
-            let jsonStr = inputValuesMatch[1].replace(/,(\s*[}\]])/g, '$1')
+            const jsonStr = inputValuesMatch[1].replace(/,(\s*[}\]])/g, '$1')
             inputValues = JSON.parse(jsonStr)
           }
         } catch { /* continue */ }
@@ -137,9 +146,11 @@ export function AppForm({ open, onOpenChange, editingApp, onSuccess }: AppFormPr
       if (curlMatch && Object.keys(inputValues).length === 0) {
         try {
           const jsonStr = curlMatch[1].replace(/\\n/g, '').replace(/\\"/g, '"')
-          const data = JSON.parse(jsonStr)
-          if (data.web_app_id) webAppId = String(data.web_app_id)
-          if (data.input_values) inputValues = data.input_values
+          const data: unknown = JSON.parse(jsonStr)
+          if (isImportedConfig(data)) {
+            if (data.web_app_id) webAppId = String(data.web_app_id)
+            if (data.input_values) inputValues = data.input_values
+          }
         } catch { /* continue */ }
       }
 
@@ -148,9 +159,11 @@ export function AppForm({ open, onOpenChange, editingApp, onSuccess }: AppFormPr
         const jsonBlockMatch = code.match(/(\{[\s\S]*\})/)
         if (jsonBlockMatch) {
           try {
-            const data = JSON.parse(jsonBlockMatch[1])
-            if (data.web_app_id) webAppId = String(data.web_app_id)
-            if (data.input_values) inputValues = data.input_values
+            const data: unknown = JSON.parse(jsonBlockMatch[1])
+            if (isImportedConfig(data)) {
+              if (data.web_app_id) webAppId = String(data.web_app_id)
+              if (data.input_values) inputValues = data.input_values
+            }
           } catch { /* continue */ }
         }
       }
@@ -274,11 +287,11 @@ export function AppForm({ open, onOpenChange, editingApp, onSuccess }: AppFormPr
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-slate-300 text-xs">Gemini Model</Label>
+                <Label className="text-slate-300 text-xs">模型名称</Label>
                 <Input
                   value={formData.modelName}
                   onChange={(e) => setFormData({ ...formData, modelName: e.target.value })}
-                  placeholder="如: nano-banana-v2"
+                  placeholder="用于 API 调用的 model 名称，如: nano-banana-v2"
                   className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 h-9 text-sm"
                   required
                 />

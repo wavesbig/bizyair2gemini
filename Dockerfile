@@ -1,7 +1,12 @@
 # 构建阶段
-FROM node:20-alpine AS builder
+FROM node:20-bookworm-slim AS builder
 
 WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  ca-certificates \
+  openssl \
+  && rm -rf /var/lib/apt/lists/*
 
 # 先复制 package.json 和 prisma schema
 COPY package*.json ./
@@ -20,13 +25,20 @@ COPY . .
 RUN npm run build
 
 # 生产阶段
-FROM node:20-alpine AS runner
+FROM node:20-bookworm-slim AS runner
 
 WORKDIR /app
 
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  ca-certificates \
+  openssl \
+  wget \
+  gosu \
+  && rm -rf /var/lib/apt/lists/*
+
 # 创建非 root 用户
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+RUN groupadd --system --gid 1001 nodejs && useradd --system --uid 1001 --gid 1001 nextjs
+RUN mkdir -p /app/data && chown -R nextjs:nodejs /app /app/data
 
 # 复制构建产物
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
@@ -44,8 +56,6 @@ ENV HOSTNAME="0.0.0.0"
 ENV DATABASE_URL="file:/app/data/dev.db"
 
 RUN chmod +x /app/docker/entrypoint.sh
-
-USER nextjs
 
 # 暴露端口
 EXPOSE ${PORT}
