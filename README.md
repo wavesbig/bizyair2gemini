@@ -1,5 +1,86 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Docker Quick Start
+
+This project can be distributed as a Docker image for other users to run directly with Docker Compose.
+
+1. Copy the environment template:
+
+```bash
+cp .env.example .env
+```
+
+2. Update `IMAGE_NAME`, `ADMIN_PASSWORD`, and `PROXY_API_KEY` in `.env`.
+
+3. Start the service:
+
+```bash
+docker compose up -d
+```
+
+4. Open `http://localhost:3000`.
+
+The container will automatically initialize `/app/data/dev.db` on first start when the mounted data directory is empty.
+
+## Docker Hub Publish
+
+Replace `your-dockerhub-user` with your Docker Hub namespace:
+
+```bash
+docker login
+docker build -t your-dockerhub-user/bizyair2gemini:latest .
+docker push your-dockerhub-user/bizyair2gemini:latest
+```
+
+If you want to publish a versioned tag too:
+
+```bash
+docker build -t your-dockerhub-user/bizyair2gemini:0.1.0 -t your-dockerhub-user/bizyair2gemini:latest .
+docker push your-dockerhub-user/bizyair2gemini:0.1.0
+docker push your-dockerhub-user/bizyair2gemini:latest
+```
+
+## One-Click Upload Scripts
+
+Before first use on each device, create `.docker-publish.json` from `.docker-publish.example.json` and fill in your Docker Hub username once.
+
+Example:
+
+```json
+{
+  "dockerUser": "your-dockerhub-user",
+  "imageName": "bizyair2gemini"
+}
+```
+
+Windows PowerShell:
+
+```powershell
+.\upload-docker.ps1 -AlsoLatest
+```
+
+macOS / Linux:
+
+```bash
+chmod +x ./upload-docker.sh
+./upload-docker.sh --also-latest
+```
+
+By default, each upload auto-increments the patch version in `package.json` and uses that version as the image tag.
+
+If you want to force a specific version, pass `-Version 0.1.0` on Windows or `--version 0.1.0` on macOS/Linux.
+
+If you are already logged in to Docker Hub, add `-NoLogin` on Windows or `--no-login` on macOS/Linux.
+
+The scripts now run a preflight check before publishing:
+
+- verify Docker CLI is installed
+- verify Docker daemon is running
+- verify Docker Hub credentials are present unless login is skipped
+- verify the git working tree is clean
+
+If you intentionally want to publish from a dirty working tree, add `-AllowDirty` on Windows or `--allow-dirty` on macOS/Linux.
+
 ## Getting Started
 
 First, run the development server:

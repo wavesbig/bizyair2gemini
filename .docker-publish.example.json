@@ -1,0 +1,4 @@
+{
+  "dockerUser": "your-dockerhub-user",
+  "imageName": "bizyair2gemini"
+}

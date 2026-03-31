@@ -1,17 +1,15 @@
-version: '3.8'
-
 services:
   app:
-    build: .
-    image: bizyair2gemini:latest
+    image: ${IMAGE_NAME:-your-dockerhub-user/bizyair2gemini:latest}
     container_name: bizyair2gemini
     ports:
       - "${APP_PORT:-3000}:3000"
     environment:
+      - DATABASE_URL=file:/app/data/dev.db
       # 管理密码
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
       # 代理 API Key
-      - PROXY_API_KEY=${PROXY_API_KEY}
+      - PROXY_API_KEY=${PROXY_API_KEY:-}
       # 日志级别 (debug, info, warn, error)
       - LOG_LEVEL=${LOG_LEVEL:-info}
     volumes:
