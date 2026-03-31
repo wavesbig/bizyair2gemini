@@ -12,7 +12,8 @@ import { toast } from 'sonner'
 import CodeEditor from '@uiw/react-textarea-code-editor'
 import { Key, Check, Upload, FileCode } from 'lucide-react'
 import { App } from './AppCard'
-import { PRESET_TEMPLATES, extractNodeIds } from './PRESET_TEMPLATES'
+import { PRESET_TEMPLATES } from './PRESET_TEMPLATES'
+import { BizyAirNodeConfig, EMPTY_NODE_CONFIG, extractNodeBindings } from '@/lib/bizyair-node-bindings'
 
 interface FormData {
   name: string
@@ -51,17 +52,13 @@ export function AppForm({ open, onOpenChange, editingApp, onSuccess }: AppFormPr
     isActive: true,
   })
   const [mappingsJson, setMappingsJson] = useState('{\n  \n}')
-  const [nodeIdsData, setNodeIdsData] = useState<Record<string, string[]>>({
-    LoadImage: [],
-    PromptNode: [],
-    TTSNode: [],
-  })
+  const [nodeIdsData, setNodeIdsData] = useState<BizyAirNodeConfig>(EMPTY_NODE_CONFIG)
   const [importCode, setImportCode] = useState('')
   const [showImport, setShowImport] = useState(false)
 
   const resetForm = useCallback(() => {
     setSelectedPreset('')
-    setNodeIdsData({ LoadImage: [], PromptNode: [], TTSNode: [] })
+    setNodeIdsData(EMPTY_NODE_CONFIG)
     if (editingApp) {
       setFormData({
         name: editingApp.name,
@@ -174,15 +171,15 @@ export function AppForm({ open, onOpenChange, editingApp, onSuccess }: AppFormPr
       }
 
       // 4. 提取节点 ID 和类型
-      const { nodeIds } = extractNodeIds(inputValues)
+      const { nodeConfig } = extractNodeBindings(inputValues)
 
       // 5. 检测应用类型并选择预设模板
       let selectedPreset = 'custom'
-      if (nodeIds.PromptNode.length > 0 && nodeIds.LoadImage.length > 0) {
+      if (nodeConfig.PromptNode.length > 0 && nodeConfig.LoadImage.length > 0) {
         selectedPreset = 'nano-banana-image-multi'
-      } else if (nodeIds.PromptNode.length > 0) {
+      } else if (nodeConfig.PromptNode.length > 0) {
         selectedPreset = 'nano-banana-image'
-      } else if (nodeIds.TTSNode.length > 0) {
+      } else if (nodeConfig.TTSNode.length > 0) {
         selectedPreset = 'nano-banana-tts'
       }
 
@@ -201,10 +198,10 @@ export function AppForm({ open, onOpenChange, editingApp, onSuccess }: AppFormPr
       setMappingsJson(JSON.stringify(template.mappings, null, 2))
 
       // 9. 保存节点 ID 数据
-      setNodeIdsData(nodeIds)
+      setNodeIdsData(nodeConfig)
 
       toast.success(
-        `解析成功！检测到: ${nodeIds.LoadImage.length} 张参考图, ${nodeIds.PromptNode.length} 个 Prompt 节点`
+        `解析成功！检测到: ${nodeConfig.LoadImage.length} 张参考图, ${nodeConfig.PromptNode.length} 个 Prompt 节点`
       )
       setShowImport(false)
     } catch (e) {

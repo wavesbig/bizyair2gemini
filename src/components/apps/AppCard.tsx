@@ -21,7 +21,7 @@ export interface App {
 interface AppCardProps {
   app: App
   onEdit: (app: App) => void
-  onDelete: (id: string) => void
+  onDelete: (app: App) => void
   onCopy: (app: App) => void
 }
 
@@ -103,7 +103,7 @@ export function AppCard({ app, onEdit, onDelete, onCopy }: AppCardProps) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => onDelete(app.id)}
+            onClick={() => onDelete(app)}
             className="border-white/10 text-red-400 hover:bg-red-500/20 hover:border-red-500/30 ml-auto"
             aria-label={`删除应用 ${app.name}`}
           >

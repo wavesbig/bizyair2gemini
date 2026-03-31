@@ -4,7 +4,7 @@ import { useEffect, useState, useSyncExternalStore } from 'react'
 import { Sidebar } from '@/components/layout/sidebar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { AppWindow, Send, Key, Copy, Globe, Sparkles, ShieldCheck } from 'lucide-react'
+import { AppWindow, Send, Key, Copy, Globe, ShieldCheck } from 'lucide-react'
 import { toast } from 'sonner'
 import { safeFetch } from '@/lib/safeFetch'
 import { buildDashboardUsage } from '@/lib/api-docs'
@@ -94,10 +94,6 @@ export default function DashboardPage() {
         <div className="mx-auto flex max-w-6xl flex-col gap-8">
           <div className="flex items-end justify-between gap-6">
             <div className="space-y-3">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs tracking-[0.24em] text-cyan-200 uppercase">
-                <Sparkles className="size-3.5" aria-hidden="true" />
-                Production Console
-              </div>
               <div className="space-y-2">
                 <h1 className="text-balance font-heading text-4xl font-semibold text-white">仪表盘</h1>
                 <p className="max-w-2xl text-sm leading-6 text-slate-300">

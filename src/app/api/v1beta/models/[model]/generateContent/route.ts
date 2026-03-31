@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { BizyAirNodeConfig, replaceMappingPlaceholders } from '@/lib/bizyair-node-bindings'
+
+type JsonMap = Record<string, unknown>
 
 // 验证代理 API Key
 async function verifyProxyAuth(request: NextRequest) {
@@ -24,52 +27,21 @@ async function verifyProxyAuth(request: NextRequest) {
   return null
 }
 
-// 替换映射中的占位符为实际节点 ID
-function replaceMappingPlaceholders(
-  mapping: Record<string, string>,
-  nodeIds: Record<string, string[]>
-): Record<string, string> {
-  const result: Record<string, string> = {}
-
-  for (const [source, target] of Object.entries(mapping)) {
-    let replaced = target
-
-    // 替换 LoadImage_N 占位符
-    for (let i = 0; i < (nodeIds.LoadImage?.length || 0); i++) {
-      const placeholder = `{LoadImage_${i + 1}}`
-      if (replaced.includes(placeholder)) {
-        replaced = replaced.replace(placeholder, nodeIds.LoadImage[i])
-      }
-    }
-
-    // 替换 PromptNode 占位符
-    if (nodeIds.PromptNode?.length > 0) {
-      replaced = replaced.replace('{PromptNode}', nodeIds.PromptNode[0])
-    }
-
-    // 替换 TTSNode 占位符
-    if (nodeIds.TTSNode?.length > 0) {
-      replaced = replaced.replace('{TTSNode}', nodeIds.TTSNode[0])
-    }
-
-    result[source] = replaced
-  }
-
-  return result
-}
-
 // 从嵌套对象中获取值 (支持 dot notation)
-function getValueByPath(obj: any, path: string): any {
+function getValueByPath(obj: unknown, path: string): unknown {
   const keys = path.split('.')
-  let current = obj
+  let current: unknown = obj
   for (const key of keys) {
     if (current === undefined || current === null) return undefined
-    // 处理数组索引
-    if (key === '0' || /^\d+$/.test(key)) {
-      current = current[parseInt(key)]
-    } else {
-      current = current[key]
+
+    if (/^\d+$/.test(key)) {
+      if (!Array.isArray(current)) return undefined
+      current = current[parseInt(key, 10)]
+      continue
     }
+
+    if (typeof current !== 'object') return undefined
+    current = (current as JsonMap)[key]
   }
   return current
 }
@@ -113,7 +85,7 @@ export async function POST(
 
     // 获取映射规则和节点 ID
     let mappings: Record<string, string> = {}
-    let nodeIds: Record<string, string[]> = {}
+    let nodeIds: BizyAirNodeConfig = { LoadImage: [], PromptNode: [], TTSNode: [] }
     try {
       mappings = JSON.parse(app.mappings || '{}')
     } catch {
@@ -129,7 +101,7 @@ export async function POST(
     const resolvedMappings = replaceMappingPlaceholders(mappings, nodeIds)
 
     // 转换 Gemini 参数到 BizyAir input_values
-    const inputValues: Record<string, any> = {}
+    const inputValues: JsonMap = {}
 
     // 处理用户定义的映射
     for (const [sourcePath, targetPath] of Object.entries(resolvedMappings)) {

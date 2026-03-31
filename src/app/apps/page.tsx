@@ -4,8 +4,16 @@ import { useEffect, useState } from 'react'
 import { Sidebar } from '@/components/layout/sidebar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { toast } from 'sonner'
-import { Plus } from 'lucide-react'
+import { AlertTriangle, Plus, Trash2 } from 'lucide-react'
 import { safeFetch } from '@/lib/safeFetch'
 import { AppCard, App } from '@/components/apps/AppCard'
 import { AppForm } from '@/components/apps/AppForm'
@@ -15,6 +23,8 @@ export default function AppsPage() {
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingApp, setEditingApp] = useState<App | null>(null)
+  const [deletingApp, setDeletingApp] = useState<App | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     fetchApps()
@@ -55,18 +65,20 @@ export default function AppsPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('确定要删除这个应用吗？')) return
-
+    setDeleting(true)
     try {
       const response = await fetch(`/api/apps/${id}`, { method: 'DELETE' })
       if (response.ok) {
         toast.success('应用已删除')
+        setDeletingApp(null)
         fetchApps()
       } else {
         toast.error('删除失败')
       }
     } catch {
       toast.error('网络错误')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -92,7 +104,7 @@ export default function AppsPage() {
                 key={app.id}
                 app={app}
                 onEdit={openDialog}
-                onDelete={handleDelete}
+                onDelete={setDeletingApp}
                 onCopy={copyAndEdit}
               />
             ))}
@@ -114,6 +126,53 @@ export default function AppsPage() {
         editingApp={editingApp}
         onSuccess={fetchApps}
       />
+
+      <Dialog open={Boolean(deletingApp)} onOpenChange={(open) => !open && !deleting && setDeletingApp(null)}>
+        <DialogContent className="glass-card max-w-md border-white/10 bg-slate-950/90 p-0 text-white" showCloseButton={!deleting}>
+          <DialogHeader className="px-6 pt-6">
+            <div className="flex items-center gap-3">
+              <div className="flex size-11 items-center justify-center rounded-2xl border border-red-400/20 bg-red-500/12 text-red-300">
+                <AlertTriangle aria-hidden="true" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <DialogTitle className="text-lg text-white">删除应用</DialogTitle>
+                <DialogDescription className="text-sm leading-6 text-slate-400">
+                  这个操作会移除当前应用配置，并立即停止对应模型入口的调用。
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <div className="px-6 pb-6">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">即将删除</p>
+              <p className="mt-2 text-base font-medium text-white">{deletingApp?.name}</p>
+              <p className="mt-2 text-sm text-slate-400">Model: <span className="font-mono text-cyan-200">{deletingApp?.modelName}</span></p>
+            </div>
+          </div>
+
+          <DialogFooter className="border-white/10 bg-white/[0.03]">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setDeletingApp(null)}
+              disabled={deleting}
+              className="border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20"
+            >
+              取消
+            </Button>
+            <Button
+              type="button"
+              onClick={() => deletingApp && handleDelete(deletingApp.id)}
+              disabled={deleting || !deletingApp}
+              className="bg-red-500 text-white hover:bg-red-600"
+            >
+              <Trash2 data-icon="inline-start" aria-hidden="true" />
+              {deleting ? '删除中...' : '确认删除'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

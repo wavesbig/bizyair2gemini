@@ -4,11 +4,10 @@ import { useEffect, useState } from 'react'
 import { Sidebar } from '@/components/layout/sidebar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
-import { Send, Loader2 } from 'lucide-react'
+import { Send, Loader2, ShieldCheck } from 'lucide-react'
 import CodeEditor from '@uiw/react-textarea-code-editor'
 import { safeFetch } from '@/lib/safeFetch'
 
@@ -26,6 +25,7 @@ export default function TestPage() {
   const [response, setResponse] = useState<unknown>(null)
   const [selectedApp, setSelectedApp] = useState('')
   const [proxyApiKey, setProxyApiKey] = useState('')
+  const [hasProxyApiKey, setHasProxyApiKey] = useState(false)
 
   // Gemini 格式的请求体
   const [requestBody, setRequestBody] = useState(`{
@@ -47,11 +47,7 @@ export default function TestPage() {
 
   useEffect(() => {
     fetchApps()
-    // 从 localStorage 获取已保存的 Proxy API Key
-    const savedKey = localStorage.getItem('proxyApiKey')
-    if (savedKey) {
-      setProxyApiKey(savedKey)
-    }
+    fetchProxyApiKey()
   }, [])
 
   async function fetchApps() {
@@ -77,6 +73,23 @@ export default function TestPage() {
     }
   }
 
+  async function fetchProxyApiKey() {
+    try {
+      const result = await safeFetch('/api/settings')
+
+      if (!result.ok) {
+        console.error('Failed to fetch proxy API key:', result.data?.error || result.status)
+        return
+      }
+
+      const key = typeof result.data?.apiKey === 'string' ? result.data.apiKey : ''
+      setProxyApiKey(key)
+      setHasProxyApiKey(Boolean(key))
+    } catch (error) {
+      console.error('Failed to fetch proxy API key:', error)
+    }
+  }
+
   async function handleSend() {
     if (!selectedApp) {
       toast.error('请选择应用')
@@ -84,12 +97,9 @@ export default function TestPage() {
     }
 
     if (!proxyApiKey) {
-      toast.error('请输入 Proxy API Key')
+      toast.error('请先在设置页配置 Proxy API Key')
       return
     }
-
-    // 保存 API Key 到 localStorage
-    localStorage.setItem('proxyApiKey', proxyApiKey)
 
     const app = apps.find((a) => a.id === selectedApp)
     if (!app) {
@@ -166,29 +176,33 @@ export default function TestPage() {
                 <CardTitle className="text-white">请求配置</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div>
-                  <Label className="text-gray-300">Proxy API Key</Label>
-                  <Input
-                    type="password"
-                    value={proxyApiKey}
-                    onChange={(e) => setProxyApiKey(e.target.value)}
-                    placeholder="sk-xxxxxxxxxxxx"
-                    className="glass-input text-white mt-1"
-                  />
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className={`size-4 ${hasProxyApiKey ? 'text-emerald-300' : 'text-amber-300'}`} aria-hidden="true" />
+                    <p className="text-sm font-medium text-white">代理密钥</p>
+                  </div>
+                  <p className={`mt-2 text-xs ${hasProxyApiKey ? 'text-emerald-300' : 'text-amber-300'}`}>
+                    {hasProxyApiKey ? '已检测到可用的 Proxy API Key' : '未检测到 Proxy API Key，请先到设置页生成或填写'}
+                  </p>
                 </div>
 
-                <div>
+                <div className="flex flex-col gap-2">
                   <Label className="text-gray-300">选择应用</Label>
                   <Select value={selectedApp} onValueChange={(v) => setSelectedApp(v || '')}>
-                    <SelectTrigger className="glass-input text-white mt-1">
-                      <SelectValue placeholder="选择应用" />
+                    <SelectTrigger className="mt-1 h-auto w-full rounded-2xl border-white/10 bg-white/[0.03] px-4 py-3 text-white hover:bg-white/[0.05]">
+                      {selectedAppData ? (
+                        <div className="min-w-0 flex-1 text-left">
+                          <p className="truncate text-sm font-medium text-white">{selectedAppData.name}</p>
+                        </div>
+                      ) : (
+                        <SelectValue placeholder="选择应用" />
+                      )}
                     </SelectTrigger>
-                    <SelectContent className="bg-slate-800 border-white/10">
+                    <SelectContent className="border-white/10 bg-slate-900/95 text-white backdrop-blur-xl">
                       {apps.map((app) => (
-                        <SelectItem key={app.id} value={app.id} className="text-gray-300">
-                          <div>
-                            <div>{app.name}</div>
-                            <div className="text-xs text-gray-500">Model: {app.modelName}</div>
+                        <SelectItem key={app.id} value={app.id} className="rounded-xl px-3 py-2 text-slate-200">
+                          <div className="min-w-0">
+                            <div className="truncate text-sm font-medium text-white">{app.name}</div>
                           </div>
                         </SelectItem>
                       ))}
